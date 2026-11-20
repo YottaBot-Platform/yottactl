@@ -1,0 +1,33 @@
+# Every commit in this repository is tyang's, as author and committer, at
+# GitHub's no-reply address, so its public history names no one else. A push
+# or pull request carrying any other fails here.
+
+name: one-author
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Every commit is tyang's
+        env:
+          WANT: tyang <289891143+tyang-yotta@users.noreply.github.com>
+        run: |
+          bad=$(git log --all --format='%H %an <%ae> | %cn <%ce>' | awk -v want="$WANT" '{ line = $0; sub(/^[0-9a-f]+ /, "", line); split(line, who, " \\| "); if (who[1] != want || who[2] != want) print $0 }')
+          if [ -n "$bad" ]; then
+            echo "Commits by someone other than $WANT:" >&2
+            echo "$bad" >&2
+            exit 1
+          fi
+          git log --all --format='%H' | wc -l
