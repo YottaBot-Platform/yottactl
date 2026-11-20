@@ -19,8 +19,10 @@ Windows, in PowerShell:
 irm https://yotta.bot/install-yottactl.ps1 | iex
 ```
 
-Or download a build from the Access Portal's **Downloads**. Each release
-lists its files' SHA-256 checksums in `SHA256SUMS`. More at [yotta.bot/platform/install](https://yotta.bot/platform/install).
+Or download a build from the Access Portal's **Downloads**, or from this
+repository's [releases](https://github.com/YottaBot-Platform/yottactl/releases).
+Each release lists its files' SHA-256 checksums in `SHA256SUMS`. More at
+[yotta.bot/platform/install](https://yotta.bot/platform/install).
 
 ## Get started
 
