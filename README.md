@@ -13,6 +13,12 @@ macOS and Linux:
 curl -fsSL https://yotta.bot/install-yottactl.sh | sh
 ```
 
+Or with [Homebrew](https://brew.sh):
+
+```bash
+brew install yottabot-platform/tap/yottactl
+```
+
 Windows, in PowerShell:
 
 ```powershell
