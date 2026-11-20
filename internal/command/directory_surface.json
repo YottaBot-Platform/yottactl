@@ -1,0 +1,257 @@
+{
+  "comment": "plan 333 step 4: the Identity API's customer surface, the one list. login-directory admits yottactl's CLI session (a Bearer) on these routes alone (cliRoutes); Platform documents each row with a doc page; yottactl's `org` commands come from it (step 5): `cli` is each one's name under `yottactl org`; the app-secret rows' commands are written by hand, as they keep a secret off the screen. Every other route stays the Identity app's. Adding a row opens it to tokens: check it changes nothing about how everyone signs in, creates no credentials and moves no money (surface_test.go refuses the console-only ones).",
+  "routes": [
+    {
+      "method": "GET",
+      "path": "/v1/directory/people",
+      "permission": "identity:ListUsers",
+      "doc": "identity/list-users",
+      "cli": "users list"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/directory/people",
+      "permission": "identity:CreateUser",
+      "doc": "identity/create-user",
+      "cli": "users invite"
+    },
+    {
+      "method": "PATCH",
+      "path": "/v1/directory/people/{id}",
+      "permission": "identity:UpdateUser",
+      "doc": "identity/update-user",
+      "cli": "users update"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/directory/people/{id}/suspend",
+      "permission": "identity:SuspendUser",
+      "doc": "identity/suspend-user",
+      "cli": "users suspend"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/directory/people/{id}/activate",
+      "permission": "identity:ActivateUser",
+      "doc": "identity/activate-user",
+      "cli": "users activate"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/directory/people/{id}/resend-invitation",
+      "permission": "identity:ResendInvitation",
+      "doc": "identity/resend-invitation",
+      "cli": "users resend-invitation"
+    },
+    {
+      "method": "DELETE",
+      "path": "/v1/directory/people/{id}",
+      "permission": "identity:DeleteUser",
+      "doc": "identity/delete-user",
+      "cli": "users delete"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/directory/groups",
+      "permission": "identity:ListGroups",
+      "doc": "identity/list-groups",
+      "cli": "groups list"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/directory/groups",
+      "permission": "identity:CreateGroup",
+      "doc": "identity/create-group",
+      "cli": "groups create"
+    },
+    {
+      "method": "PATCH",
+      "path": "/v1/directory/groups/{id}",
+      "permission": "identity:UpdateGroup",
+      "doc": "identity/update-group",
+      "cli": "groups update"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/directory/groups/{id}/members",
+      "permission": "identity:AddUserToGroup",
+      "doc": "identity/add-group-member",
+      "cli": "groups add-member"
+    },
+    {
+      "method": "DELETE",
+      "path": "/v1/directory/groups/{id}/members/{person}",
+      "permission": "identity:RemoveUserFromGroup",
+      "doc": "identity/remove-group-member",
+      "cli": "groups remove-member"
+    },
+    {
+      "method": "DELETE",
+      "path": "/v1/directory/groups/{id}",
+      "permission": "identity:DeleteGroup",
+      "doc": "identity/delete-group",
+      "cli": "groups delete"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/directory/roles",
+      "permission": "identity:ListRoles",
+      "doc": "identity/list-roles",
+      "cli": "roles list"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/directory/roles",
+      "permission": "identity:CreateRole",
+      "doc": "identity/create-role",
+      "cli": "roles create"
+    },
+    {
+      "method": "PATCH",
+      "path": "/v1/directory/roles/{id}",
+      "permission": "identity:UpdateRole",
+      "doc": "identity/update-role",
+      "cli": "roles update"
+    },
+    {
+      "method": "PUT",
+      "path": "/v1/directory/roles/{id}/policies/{policy}",
+      "permission": "identity:UpdateRole",
+      "doc": "identity/add-role-policy",
+      "cli": "roles add-policy"
+    },
+    {
+      "method": "DELETE",
+      "path": "/v1/directory/roles/{id}/policies/{policy}",
+      "permission": "identity:UpdateRole",
+      "doc": "identity/remove-role-policy",
+      "cli": "roles remove-policy"
+    },
+    {
+      "method": "PUT",
+      "path": "/v1/directory/roles/{id}/accounts/{account}",
+      "permission": "identity:ProvisionRole",
+      "doc": "identity/add-role-account",
+      "cli": "roles add-account"
+    },
+    {
+      "method": "DELETE",
+      "path": "/v1/directory/roles/{id}/accounts/{account}",
+      "permission": "identity:ProvisionRole",
+      "doc": "identity/remove-role-account",
+      "cli": "roles remove-account"
+    },
+    {
+      "method": "DELETE",
+      "path": "/v1/directory/roles/{id}",
+      "permission": "identity:DeleteRole",
+      "doc": "identity/delete-role",
+      "cli": "roles delete"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/directory/policies",
+      "permission": "identity:ListPolicies",
+      "doc": "identity/list-policies",
+      "cli": "policies list"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/directory/permissions",
+      "permission": "identity:ListPolicies",
+      "doc": "identity/list-permissions",
+      "cli": "policies permissions"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/directory/policies",
+      "permission": "identity:CreatePolicy",
+      "doc": "identity/create-policy",
+      "cli": "policies create"
+    },
+    {
+      "method": "PATCH",
+      "path": "/v1/directory/policies/{id}",
+      "permission": "identity:UpdatePolicy",
+      "doc": "identity/update-policy",
+      "cli": "policies update"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/directory/policies/{id}/permissions",
+      "permission": "identity:UpdatePolicy",
+      "doc": "identity/set-policy-permission",
+      "cli": "policies set-permission"
+    },
+    {
+      "method": "DELETE",
+      "path": "/v1/directory/policies/{id}",
+      "permission": "identity:DeletePolicy",
+      "doc": "identity/delete-policy",
+      "cli": "policies delete"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/directory/assignments",
+      "permission": "identity:ListPolicies",
+      "doc": "identity/list-assignments",
+      "cli": "assignments list"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/directory/assignments",
+      "permission": "identity:CreateAccountAssignment",
+      "doc": "identity/create-assignment",
+      "cli": "assignments create"
+    },
+    {
+      "method": "DELETE",
+      "path": "/v1/directory/assignments/{id}",
+      "permission": "identity:DeleteAccountAssignment",
+      "doc": "identity/delete-assignment",
+      "cli": "assignments delete"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/directory/accounts",
+      "permission": "identity:ListAccounts",
+      "doc": "identity/list-accounts",
+      "cli": "accounts list"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/directory/events",
+      "permission": "identity:GetSettings",
+      "doc": "identity/list-events",
+      "cli": "events list"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/directory/applications",
+      "permission": "identity:ListApps",
+      "doc": "",
+      "cli": "apps list"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/directory/applications/{id}/secrets",
+      "permission": "identity:ListApps",
+      "doc": "",
+      "cli": "apps secrets list"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/directory/applications/{id}/secrets",
+      "permission": "identity:UpdateApp",
+      "doc": "",
+      "cli": "apps secrets create"
+    },
+    {
+      "method": "DELETE",
+      "path": "/v1/directory/applications/{id}/secrets/{secret}",
+      "permission": "identity:UpdateApp",
+      "doc": "",
+      "cli": "apps secrets delete"
+    }
+  ]
+}

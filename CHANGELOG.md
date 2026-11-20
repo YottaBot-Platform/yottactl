@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.2
+
+- yottactl's source is in this repository, and each release is tagged on the
+  source it was built from. Build it with
+  `go install github.com/YottaBot-Platform/yottactl/cmd/yottactl@latest`.
+- A build from source says its version (`yottactl --version`) when Go
+  installed it at one.
+
 ## 1.0.1
 
 - `yottactl --help` now says what yottactl is for and where to start
