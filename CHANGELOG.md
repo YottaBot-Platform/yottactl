@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.2
+
+- yottactl is open source, under the Apache License 2.0 (LICENSE, NOTICE).
+  Releases before 1.1.2 keep the terms they were published under.
+- Every archive carries LICENSE, NOTICE and THIRD_PARTY_NOTICES, the licenses
+  of the code yottactl is built with.
+
 ## 1.1.1
 
 - `yottactl login` remembers where you signed in: if your company signs in at

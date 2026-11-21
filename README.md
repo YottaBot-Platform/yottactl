@@ -61,4 +61,9 @@ Every command has a page in the API reference, with the permission it needs:
 
 ## License
 
-© 2026 YottaBot, Inc. All rights reserved. See [LICENSE.md](LICENSE.md).
+yottactl is licensed under the [Apache License 2.0](LICENSE); see
+[NOTICE](NOTICE). Every release's archives carry both, with the licenses of
+the code it's built with (`THIRD_PARTY_NOTICES`). The license grants no right
+to use YottaBot's names or logos, and using YottaBot's services with yottactl
+is subject to the YottaBot terms that apply to you, at
+[yotta.bot/terms](https://yotta.bot/terms).
