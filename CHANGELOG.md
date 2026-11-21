@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.1.1
+
+- `yottactl login` remembers where you signed in: if your company signs in at
+  its own address, pass `--issuer https://<company>.yotta.bot` once, and later
+  sign-ins go there too (it says so). `--issuer` still chooses another, and
+  `yottactl logout` keeps the address.
+- `yottactl login --help` says what `--issuer` is for.
+- `yottactl org boo usage --query group_by=group` names each group.
+
 ## 1.1.0
 
 - `yottactl org boo`: your organization's Boo usage, balance and receipts,

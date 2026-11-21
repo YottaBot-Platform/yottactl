@@ -40,6 +40,7 @@ go install github.com/YottaBot-Platform/yottactl/cmd/yottactl@latest
 
 ```bash
 yottactl login                 # approve a code in your browser
+yottactl login --issuer https://<company>.yotta.bot   # if your company signs in at its own address; remembered
 yottactl org users list
 yottactl org groups add-member <group-id> --set person_id=<person-id>
 yottactl org boo usage --query group_by=group   # your organization's Boo usage, by group

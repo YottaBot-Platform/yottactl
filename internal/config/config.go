@@ -79,6 +79,10 @@ type Config struct {
 	CurrentContext string        `yaml:"current-context"`
 	Contexts       []Context     `yaml:"contexts"`
 	Login          *LoginSession `yaml:"login,omitempty"`
+	// LoginIssuer is where the last `yottactl login` signed in, which the next
+	// one uses unless --issuer says otherwise. It outlasts the session and
+	// `yottactl logout`: it is an address, not a credential.
+	LoginIssuer string `yaml:"login-issuer,omitempty"`
 }
 
 // Path returns the config file location: $YOTTA_CONFIG if set, else

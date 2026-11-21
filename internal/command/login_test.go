@@ -600,3 +600,65 @@ func TestLogoutForgetsEvenWhenLoginIsUnreachable(t *testing.T) {
 		t.Error("kept the CLI session")
 	}
 }
+
+// A company that signs in at its own address passes --issuer once: the next
+// sign-in goes there too, says so, and outlasts `yottactl logout`; --issuer
+// still chooses another (plan 333 step 7, owner 2026-11-21).
+func TestLoginRemembersWhereItSignedIn(t *testing.T) {
+	f := newFakeLogin(t, "ok", "ok", "ok")
+	useFakes(t, f)
+	run := func(args ...string) (string, error) {
+		t.Helper()
+		var out, errOut bytes.Buffer
+		cmd := newLoginCmd()
+		cmd.SilenceUsage, cmd.SilenceErrors = true, true
+		cmd.SetOut(&out)
+		cmd.SetErr(&errOut)
+		cmd.SetArgs(args)
+		err := cmd.Execute()
+		return errOut.String(), err
+	}
+	if errOut, err := run("--issuer", f.login.URL, "--no-browser"); err != nil {
+		t.Fatalf("login: %v\n%s", err, errOut)
+	}
+	if cfg := mustLoad(t); cfg.LoginIssuer != f.login.URL || cfg.Login.Issuer != f.login.URL {
+		t.Fatalf("remembered %q, session at %q", cfg.LoginIssuer, cfg.Login.Issuer)
+	}
+	// No --issuer: where it signed in last, and it says so.
+	errOut, err := run("--no-browser")
+	if err != nil {
+		t.Fatalf("login again: %v\n%s", err, errOut)
+	}
+	if !strings.Contains(errOut, "Signing in at "+f.login.URL+", where you signed in last") {
+		t.Fatalf("didn't say where it signs in: %s", errOut)
+	}
+	if cfg := mustLoad(t); cfg.Login == nil || cfg.Login.Issuer != f.login.URL {
+		t.Fatalf("second session %+v", cfg.Login)
+	}
+	// --issuer still chooses: a remembered address elsewhere is passed over.
+	cfg := mustLoad(t)
+	cfg.LoginIssuer = "https://elsewhere.example.test"
+	if err := cfg.Save(); err != nil {
+		t.Fatal(err)
+	}
+	if errOut, err := run("--issuer", f.login.URL, "--no-browser"); err != nil || strings.Contains(errOut, "where you signed in last") {
+		t.Fatalf("--issuer over a remembered address: %v\n%s", err, errOut)
+	}
+	if cfg := mustLoad(t); cfg.LoginIssuer != f.login.URL {
+		t.Fatalf("remembered %q after --issuer", cfg.LoginIssuer)
+	}
+	// A bad --issuer is still refused before any call.
+	if _, err := run("--issuer", "http://login.example.test"); err == nil {
+		t.Fatal("an http issuer was accepted")
+	}
+	// Signing out ends the session and keeps the address.
+	logout := newLogoutCmd()
+	logout.SetOut(&bytes.Buffer{})
+	logout.SetArgs(nil)
+	if err := logout.Execute(); err != nil {
+		t.Fatal(err)
+	}
+	if cfg := mustLoad(t); cfg.Login != nil || cfg.LoginIssuer != f.login.URL {
+		t.Fatalf("after logout: session %v, address %q", cfg.Login, cfg.LoginIssuer)
+	}
+}

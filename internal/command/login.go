@@ -94,8 +94,12 @@ Access keys window names it. A command against one of them fetches that
 environment's own token (an hour at most) and fetches a new one when it runs
 out, until the 8 hours end. --account and --permission-set write just one.
 
+It signs in at login.yotta.bot unless your company signs in at its own
+address: then pass it once with --issuer, and later sign-ins use it again.
+
 Examples:
   yottactl login
+  yottactl login --issuer https://<company>.yotta.bot
   yottactl login --account acme-prod --permission-set Administrator
   yottactl config use-context acme-prod-administrator`,
 		Args: cobra.NoArgs,
@@ -103,7 +107,7 @@ Examples:
 			return runLogin(cmd, issuer, account, set, noBrowser)
 		},
 	}
-	cmd.Flags().StringVar(&issuer, "issuer", defaultLoginIssuer, "the Access Portal address (another only for a self-hosted sign-in)")
+	cmd.Flags().StringVar(&issuer, "issuer", "", "where you sign in, if your company has its own address, like https://<company>.yotta.bot (default: the last sign-in's, else "+defaultLoginIssuer+")")
 	cmd.Flags().StringVar(&account, "account", "", "write the context for this account only (its name or id)")
 	cmd.Flags().StringVar(&set, "permission-set", "", "write the context for this permission set only (its name or id)")
 	cmd.Flags().BoolVar(&noBrowser, "no-browser", false, "print the address instead of opening a browser")
@@ -159,13 +163,23 @@ var userCodeShape = regexp.MustCompile(`^[A-Z]{4}-[A-Z]{4}$`)
 
 func runLogin(cmd *cobra.Command, issuerFlag, accountFlag, setFlag string, noBrowser bool) error {
 	out, errOut := cmd.OutOrStdout(), cmd.ErrOrStderr()
-	issuer, ok := httpsOrigin(issuerFlag)
-	if !ok {
-		return &ExitError{Code: 2, Msg: "--issuer must be an https origin, like " + defaultLoginIssuer}
-	}
 	cfg, err := config.Load()
 	if err != nil {
 		return &ExitError{Code: 1, Msg: err.Error()}
+	}
+	issuer, ok := httpsOrigin(issuerFlag)
+	if issuerFlag == "" {
+		// The last sign-in's address, else login.yotta.bot's.
+		issuer, ok = defaultLoginIssuer, true
+		if remembered, valid := httpsOrigin(cfg.LoginIssuer); valid {
+			issuer = remembered
+		}
+	}
+	if !ok {
+		return &ExitError{Code: 2, Msg: "--issuer must be an https origin, like " + defaultLoginIssuer}
+	}
+	if issuerFlag == "" && issuer != defaultLoginIssuer {
+		fmt.Fprintf(errOut, "Signing in at %s, where you signed in last (--issuer %s for another).\n", issuer, defaultLoginIssuer)
 	}
 
 	d, err := discoverLogin(issuer)
@@ -206,6 +220,7 @@ func runLogin(cmd *cobra.Command, issuerFlag, accountFlag, setFlag string, noBro
 	session.Issuer = issuer
 	session.Email = start.Person.Email
 	cfg.Login = &session
+	cfg.LoginIssuer = issuer
 
 	type written struct{ name, server string }
 	var wrote []written
