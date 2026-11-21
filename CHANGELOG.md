@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.1.0
+
+- `yottactl org boo`: your organization's Boo usage, balance and receipts,
+  each person's allowance, and its plans, extra credits, credit requests and
+  cloud machines setting, from the Boo · Admin API
+  ([yotta.bot/platform/boo-admin](https://yotta.bot/platform/boo-admin)).
+  It reads only; changes are made in Boo · Admin.
+
 ## 1.0.2
 
 - yottactl's source is in this repository, and each release is tagged on the

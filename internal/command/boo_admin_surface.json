@@ -1,0 +1,68 @@
+{
+  "comment": "plan 333 step 7: Boo · Admin's customer surface, the one list. The server admits yottactl's CLI session (a Bearer) on these routes alone; Platform documents each row with a doc page; yottactl's `org boo` commands come from it, `cli` each one's name under `yottactl org`. They only read: every change in Boo · Admin spends the organization's money or credits (a plan adds to the bill, extra credits come out of the pool, cloud machines run up usage), so changes stay in the console, and the server's tests refuse a row that isn't a GET.",
+  "routes": [
+    {
+      "method": "GET",
+      "path": "/v1/login/boo-admin/balance",
+      "permission": "boo-admin:GetUsage",
+      "doc": "boo-admin/get-balance",
+      "cli": "boo balance"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/login/boo-admin/usage",
+      "permission": "boo-admin:GetUsage",
+      "doc": "boo-admin/get-usage",
+      "cli": "boo usage"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/login/boo-admin/receipts",
+      "permission": "boo-admin:GetUsage",
+      "doc": "boo-admin/list-receipts",
+      "cli": "boo receipts"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/login/boo-admin/allowances/{person}",
+      "permission": "boo-admin:GetUsage",
+      "doc": "boo-admin/get-allowance",
+      "cli": "boo allowance"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/login/boo-admin/subjects",
+      "permission": "boo-admin:ListAllocations",
+      "doc": "boo-admin/list-subjects",
+      "cli": "boo subjects"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/login/boo-admin/plans",
+      "permission": "boo-admin:ListAllocations",
+      "doc": "boo-admin/list-plans",
+      "cli": "boo plans"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/login/boo-admin/grants",
+      "permission": "boo-admin:ListAllocations",
+      "doc": "boo-admin/list-credits",
+      "cli": "boo credits"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/login/boo-admin/requests",
+      "permission": "boo-admin:ListAllocations",
+      "doc": "boo-admin/list-credit-requests",
+      "cli": "boo requests"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/login/boo-admin/machines",
+      "permission": "boo-admin:ListAllocations",
+      "doc": "boo-admin/get-cloud-machines",
+      "cli": "boo cloud-machines"
+    }
+  ]
+}

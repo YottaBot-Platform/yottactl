@@ -42,7 +42,8 @@ type fakeLogin struct {
 	discovery        map[string]any
 	verificationURI  string
 	keysTokenAddress string
-	// directory serves login-directory's /v1/directory/ routes (org_test.go).
+	// directory serves login-directory's /v1/directory/ routes (org_test.go),
+	// and Boo · Admin's /v1/login/boo-admin/ (org_surface_test.go).
 	directory http.HandlerFunc
 }
 
@@ -164,7 +165,7 @@ func (f *fakeLogin) serveLogin(w http.ResponseWriter, r *http.Request) {
 		}
 		w.WriteHeader(http.StatusNoContent)
 	default:
-		if f.directory != nil && strings.HasPrefix(r.URL.Path, "/v1/directory/") {
+		if f.directory != nil && (strings.HasPrefix(r.URL.Path, "/v1/directory/") || strings.HasPrefix(r.URL.Path, "/v1/login/boo-admin/")) {
 			f.directory(w, r)
 			return
 		}

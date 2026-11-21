@@ -10,12 +10,12 @@ import (
 	"testing"
 )
 
-// yottactl's org commands are login-directory's surface.json, row for row
-// (plan 333 step 5).
+// yottactl's org commands are the servers' surfaces, row for row: the
+// Identity API's (plan 333 step 5) and Boo · Admin's (step 7).
 
 func TestOrgHasACommandForEveryRow(t *testing.T) {
 	org := newOrgCmd(&Env{Output: "json"})
-	for _, row := range directorySurface() {
+	for _, row := range append(directorySurface(), booSurface()...) {
 		if row.CLI == "" {
 			t.Errorf("%s %s has no cli name", row.Method, row.Path)
 			continue
@@ -103,6 +103,32 @@ func TestOrgSurfaceCommandsCallTheirRoutes(t *testing.T) {
 		}
 		if len(d.calls) != 1 || strings.TrimSpace(d.calls[0]) != c.call {
 			t.Errorf("%v sent %q, want %q", c.args, d.calls, c.call)
+		}
+	}
+
+	// Boo · Admin's reads, `org boo`: GETs alone, its path parameter an
+	// argument, --query its filters.
+	for _, c := range []struct {
+		args  []string
+		query []string
+		call  string
+	}{
+		{[]string{"boo", "balance"}, nil, "GET|/v1/login/boo-admin/balance|" + bearer + "||"},
+		{[]string{"boo", "usage"}, []string{"group_by=account", "account_id=100000000123"}, "GET|/v1/login/boo-admin/usage?account_id=100000000123&group_by=account|" + bearer + "||"},
+		{[]string{"boo", "allowance", "p1"}, nil, "GET|/v1/login/boo-admin/allowances/p1|" + bearer + "||"},
+		{[]string{"boo", "cloud-machines"}, nil, "GET|/v1/login/boo-admin/machines|" + bearer + "||"},
+	} {
+		d.calls = nil
+		if _, errOut, err := runOrgWith(&Env{Output: "json", Query: c.query}, c.args...); err != nil {
+			t.Fatalf("%v: %v %s", c.args, err, errOut)
+		}
+		if len(d.calls) != 1 || strings.TrimSpace(d.calls[0]) != c.call {
+			t.Errorf("%v sent %q, want %q", c.args, d.calls, c.call)
+		}
+	}
+	for _, row := range booSurface() {
+		if row.Method != http.MethodGet {
+			t.Errorf("yottactl org %s changes something; Boo · Admin's changes are the console's", row.CLI)
 		}
 	}
 

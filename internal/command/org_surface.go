@@ -1,11 +1,13 @@
 package command
 
-// `yottactl org` commands generated from login-directory's surface.json, the
-// Identity API's customer surface, the routes chosen as safe to open to a
-// program (plan 333 step 5). directory_surface.json is a byte copy (`make sync-surface`), so
-// yottactl offers exactly what the server admits a token on and Platform
-// documents: one row, one command, `yottactl org <cli>`. The app-secret rows'
-// commands are written by hand (org.go), as they keep a secret off the screen.
+// `yottactl org` commands generated from the customer surfaces, the routes
+// chosen as safe to open to a program: the Identity API's (plan 333 step 5)
+// and Boo · Admin's (`org boo`, step 7, reads only). directory_surface.json
+// and boo_admin_surface.json are byte copies of the servers' lists (`make
+// sync-surface`), so yottactl offers exactly what the server admits a token on
+// and Platform documents: one row, one command, `yottactl org <cli>`. The
+// app-secret rows' commands are written by hand (org.go), as they keep a
+// secret off the screen.
 
 import (
 	_ "embed"
@@ -24,6 +26,9 @@ import (
 //go:embed directory_surface.json
 var directorySurfaceJSON []byte
 
+//go:embed boo_admin_surface.json
+var booSurfaceJSON []byte
+
 type surfaceRow struct {
 	Method     string `json:"method"`
 	Path       string `json:"path"`
@@ -33,11 +38,18 @@ type surfaceRow struct {
 }
 
 func directorySurface() []surfaceRow {
+	return surfaceRows("directory_surface.json", directorySurfaceJSON)
+}
+
+// booSurface is Boo · Admin's rows, every one `boo <verb>`.
+func booSurface() []surfaceRow { return surfaceRows("boo_admin_surface.json", booSurfaceJSON) }
+
+func surfaceRows(name string, raw []byte) []surfaceRow {
 	var f struct {
 		Routes []surfaceRow `json:"routes"`
 	}
-	if err := json.Unmarshal(directorySurfaceJSON, &f); err != nil {
-		panic(fmt.Sprintf("yottactl: directory_surface.json: %v", err))
+	if err := json.Unmarshal(raw, &f); err != nil {
+		panic(fmt.Sprintf("yottactl: %s: %v", name, err))
 	}
 	return f.Routes
 }
@@ -66,19 +78,27 @@ func argNames(row surfaceRow) []string {
 // addSurfaceCommands puts every generated row under org, one group per noun.
 func addSurfaceCommands(env *Env, org *cobra.Command) {
 	nouns := map[string]*cobra.Command{}
-	for _, row := range directorySurface() {
-		if handWritten[row.CLI] {
-			continue
+	add := func(rows []surfaceRow, short func(noun string) string) {
+		for _, row := range rows {
+			if handWritten[row.CLI] {
+				continue
+			}
+			parts := strings.Fields(row.CLI)
+			noun, verb := parts[0], parts[1]
+			group, ok := nouns[noun]
+			if !ok {
+				group = &cobra.Command{Use: noun, Short: short(noun)}
+				nouns[noun] = group
+			}
+			group.AddCommand(newSurfaceCmd(env, row, verb))
 		}
-		parts := strings.Fields(row.CLI)
-		noun, verb := parts[0], parts[1]
-		group, ok := nouns[noun]
-		if !ok {
-			group = &cobra.Command{Use: noun, Short: "Your organization's " + noun + " (Identity API; yotta.bot/platform/identity)"}
-			nouns[noun] = group
-		}
-		group.AddCommand(newSurfaceCmd(env, row, verb))
 	}
+	add(directorySurface(), func(noun string) string {
+		return "Your organization's " + noun + " (Identity API; yotta.bot/platform/identity)"
+	})
+	add(booSurface(), func(string) string {
+		return "Your organization's Boo usage, plans and credits, to read (Boo · Admin API; yotta.bot/platform/boo-admin)"
+	})
 	names := make([]string, 0, len(nouns))
 	for n := range nouns {
 		names = append(names, n)

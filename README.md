@@ -42,6 +42,7 @@ go install github.com/YottaBot-Platform/yottactl/cmd/yottactl@latest
 yottactl login                 # approve a code in your browser
 yottactl org users list
 yottactl org groups add-member <group-id> --set person_id=<person-id>
+yottactl org boo usage --query group_by=group   # your organization's Boo usage, by group
 yottactl org token             # your token, for calling the API with curl
 ```
 
