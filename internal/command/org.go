@@ -31,7 +31,7 @@ func newOrgCmd(env *Env) *cobra.Command {
 	}
 	apps := &cobra.Command{Use: "apps", Short: "Your organization's apps and their client secrets"}
 	apps.AddCommand(newOrgAppsListCmd(env), newOrgAppSecretsCmd(env))
-	org.AddCommand(apps, newOrgTokenCmd())
+	org.AddCommand(apps, newOrgTokenCmd(), newOrgServiceAccountsCmd())
 	// The rest of the Identity API's customer surface (plan 333 step 5).
 	addSurfaceCommands(env, org)
 	return org
@@ -213,22 +213,47 @@ func orgCallBody(method, path string, body any) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	s := cfg.Login
-	if s == nil || s.Token == "" || !s.ExpiresAt.After(loginNow()) {
-		return nil, &ExitError{Code: 2, Msg: errLoginEnded.Error()}
+	// A service account (plan 334 step 6) signs in for itself, with a token
+	// for the surface this path is on; else the person's `yottactl login`.
+	machine, err := activeMachine(cfg)
+	if err != nil {
+		return nil, err
 	}
-	issuer, ok := httpsOrigin(s.Issuer)
-	if !ok {
-		return nil, &ExitError{Code: 2, Msg: errLoginEnded.Error()}
+	var issuer, bearer string
+	if machine != nil {
+		issuer = machine.issuer
+		if bearer, err = machine.token(machine.audienceFor(path)); err != nil {
+			return nil, err
+		}
+	} else {
+		s := cfg.Login
+		if s == nil || s.Token == "" || !s.ExpiresAt.After(loginNow()) {
+			return nil, &ExitError{Code: 2, Msg: errLoginEnded.Error()}
+		}
+		var ok bool
+		if issuer, ok = httpsOrigin(s.Issuer); !ok {
+			return nil, &ExitError{Code: 2, Msg: errLoginEnded.Error()}
+		}
+		bearer = s.Token
 	}
 	// A change always sends JSON, {} when it has nothing to say: the
 	// directory refuses one that isn't (415).
 	if (method == http.MethodPost || method == http.MethodPut || method == http.MethodPatch) && body == nil {
 		body = struct{}{}
 	}
-	status, b, err := loginCall(method, issuer+path, s.Token, nil, body)
+	status, b, err := loginCall(method, issuer+path, bearer, nil, body)
 	if err != nil {
 		return nil, fmt.Errorf("reach %s: %w", issuer, err)
+	}
+	// A kept token refused: its sign-in was ended in Identity. Sign in once
+	// more with the key and try again.
+	if status == http.StatusUnauthorized && machine != nil && machine.retryable(machine.audienceFor(path)) {
+		if bearer, err = machine.token(machine.audienceFor(path)); err != nil {
+			return nil, err
+		}
+		if status, b, err = loginCall(method, issuer+path, bearer, nil, body); err != nil {
+			return nil, fmt.Errorf("reach %s: %w", issuer, err)
+		}
 	}
 	if status >= 200 && status < 300 {
 		return b, nil
@@ -243,6 +268,10 @@ func orgCallBody(method, path string, body any) ([]byte, error) {
 		msg += ": " + e.Error
 	}
 	switch {
+	case status == http.StatusUnauthorized && machine != nil:
+		msg = machine.clientID + "'s token was refused at " + issuer + ": it may have been ended in Identity, or its account disabled"
+	case status == http.StatusForbidden && machine != nil && e.Error == "yottactl can't do this; use the console":
+		msg = "a service account can't do this: it's the console's, in Identity"
 	case status == http.StatusUnauthorized:
 		msg = errLoginEnded.Error()
 	case e.Next == "step_up":

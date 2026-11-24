@@ -83,6 +83,30 @@ type Config struct {
 	// one uses unless --issuer says otherwise. It outlasts the session and
 	// `yottactl logout`: it is an address, not a credential.
 	LoginIssuer string `yaml:"login-issuer,omitempty"`
+	// ServiceAccount is `yottactl login --service-account`: an organization's
+	// service account signing in with its key (plan 334 step 6).
+	// The key stays in its file; only where it is is kept here.
+	ServiceAccount *ServiceAccountLogin `yaml:"service-account,omitempty"`
+}
+
+// ServiceAccountLogin is where a service account signs in and with what.
+type ServiceAccountLogin struct {
+	Issuer   string `yaml:"issuer"`
+	ClientID string `yaml:"client-id"`
+	KeyFile  string `yaml:"key-file"`
+	// KeyID is the key's ID at login.yotta.bot, when it isn't the key's own
+	// thumbprint (the default).
+	KeyID string `yaml:"key-id,omitempty"`
+	// Tokens are the tokens it was issued, by audience, kept until a minute
+	// before they end so each command doesn't sign in again (the AWS CLI keeps
+	// its own the same way; a person's session token is kept here too).
+	Tokens map[string]SavedToken `yaml:"tokens,omitempty"`
+}
+
+// SavedToken is a service account's token and when it ends.
+type SavedToken struct {
+	Token     string    `yaml:"token"`
+	ExpiresAt time.Time `yaml:"expires-at"`
 }
 
 // Path returns the config file location: $YOTTA_CONFIG if set, else

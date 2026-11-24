@@ -77,7 +77,7 @@ var (
 var errLoginEnded = errors.New("yottactl's sign-in at the Access Portal has ended — run `yottactl login`")
 
 func newLoginCmd() *cobra.Command {
-	var issuer, account, set string
+	var issuer, account, set, serviceAccount, keyFile, keyID string
 	var noBrowser bool
 	cmd := &cobra.Command{
 		Use:     "login",
@@ -97,16 +97,33 @@ out, until the 8 hours end. --account and --permission-set write just one.
 It signs in at login.yotta.bot unless your company signs in at its own
 address: then pass it once with --issuer, and later sign-ins use it again.
 
+An organization's service account signs in with its key instead: no
+browser, no code. Its key stays in its file; yottactl keeps where it is. In
+a pipeline, set YOTTA_SERVICE_ACCOUNT with YOTTA_PRIVATE_KEY (the PEM) or
+YOTTA_PRIVATE_KEY_FILE instead; in GitHub Actions, YOTTA_SERVICE_ACCOUNT alone,
+with the job's id-token: write permission, signs in under the account's trust
+policy with no key at all.
+
 Examples:
   yottactl login
   yottactl login --issuer https://<company>.yotta.bot
   yottactl login --account acme-prod --permission-set Administrator
-  yottactl config use-context acme-prod-administrator`,
+  yottactl config use-context acme-prod-administrator
+  yottactl login --service-account sa-<id> --key ./terraform.pem`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
+			if serviceAccount != "" {
+				return runServiceAccountLogin(cmd, issuer, serviceAccount, keyFile, keyID)
+			}
+			if keyFile != "" || keyID != "" {
+				return &ExitError{Code: 2, Msg: "--key and --key-id go with --service-account"}
+			}
 			return runLogin(cmd, issuer, account, set, noBrowser)
 		},
 	}
+	cmd.Flags().StringVar(&serviceAccount, "service-account", "", "sign in as your organization's service account (sa-<id>), with --key")
+	cmd.Flags().StringVar(&keyFile, "key", "", "the service account's Ed25519 private key file (PEM)")
+	cmd.Flags().StringVar(&keyID, "key-id", "", "the key's ID in Identity, if it isn't the key's own thumbprint")
 	cmd.Flags().StringVar(&issuer, "issuer", "", "where you sign in, if your company has its own address, like https://<company>.yotta.bot (default: the last sign-in's, else "+defaultLoginIssuer+")")
 	cmd.Flags().StringVar(&account, "account", "", "write the context for this account only (its name or id)")
 	cmd.Flags().StringVar(&set, "permission-set", "", "write the context for this permission set only (its name or id)")
@@ -217,6 +234,8 @@ func runLogin(cmd *cobra.Command, issuerFlag, accountFlag, setFlag string, noBro
 	}
 
 	previous := cfg.Login
+	// A person signing in ends a service account's sign-in here (plan 334).
+	cfg.ServiceAccount = nil
 	session.Issuer = issuer
 	session.Email = start.Person.Email
 	cfg.Login = &session
@@ -475,9 +494,19 @@ func runLogout(cmd *cobra.Command) error {
 	}
 	session := cfg.Login
 	if session == nil && cleared == 0 {
+		if cfg.ServiceAccount != nil {
+			clientID := cfg.ServiceAccount.ClientID
+			cfg.ServiceAccount = nil
+			if err := cfg.Save(); err != nil {
+				return &ExitError{Code: 1, Msg: err.Error()}
+			}
+			fmt.Fprintf(out, "Forgot %s. Its key file is still where it was; its tokens end within 15 minutes, or now if you end them in Identity.\n", clientID)
+			return nil
+		}
 		fmt.Fprintln(out, "yottactl is not signed in at the Access Portal.")
 		return nil
 	}
+	cfg.ServiceAccount = nil
 
 	// Revoke the CLI session first; whatever login.yotta.bot answers, this
 	// computer forgets it.

@@ -47,6 +47,15 @@ yottactl org boo usage --query group_by=group   # your organization's Boo usage,
 yottactl org token             # your token, for calling the API with curl
 ```
 
+A pipeline or a script signs in as one of your organization's service
+accounts instead, with its key or GitHub Actions:
+
+```bash
+yottactl login --service-account sa-<id> --key ./terraform.pem
+```
+
+See [yotta.bot/platform/authentication](https://yotta.bot/platform/authentication).
+
 Every command has a page in the API reference, with the permission it needs:
 [yotta.bot/platform](https://yotta.bot/platform).
 

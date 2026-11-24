@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.2.0
+
+- An organization's service account signs in for itself, with no browser:
+  `yottactl login --service-account sa-<id> --key <file>`, or in a pipeline
+  `YOTTA_SERVICE_ACCOUNT` with `YOTTA_PRIVATE_KEY` or `YOTTA_PRIVATE_KEY_FILE`.
+  In GitHub Actions, `YOTTA_SERVICE_ACCOUNT` alone signs in under the account's
+  trust policy, with no key.
+- `yottactl org service-accounts keygen` makes the key: the private half to a
+  new file, the public half to paste into Identity.
+- Signed in as a service account, `yottactl org token --surface identity` (or
+  `boo-admin`) prints a 15-minute token for curl. yottactl keeps that token
+  until a minute before it ends, so a run of commands signs in once.
+- More at [yotta.bot/platform/authentication](https://yotta.bot/platform/authentication).
+
 ## 1.1.2
 
 - yottactl is open source, under the Apache License 2.0 (LICENSE, NOTICE).

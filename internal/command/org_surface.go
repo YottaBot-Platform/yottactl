@@ -218,12 +218,16 @@ func listOf(response []byte) []byte {
 // yotta.bot/platform's endpoints, as `gh auth token` prints gh's (plan 333
 // step 5).
 func newOrgTokenCmd() *cobra.Command {
-	return &cobra.Command{
+	var surface string
+	cmd := &cobra.Command{
 		Use:   "token",
 		Short: "Print your `yottactl login` session's token, for calling the Identity API with curl",
 		Long: `Print the token your ` + "`yottactl login`" + ` session holds, for
 Authorization: Bearer on yotta.bot/platform's endpoints. It acts as you, with
 your roles, until the session ends; treat it as a password.
+
+Signed in as a service account, it prints a 15-minute token of its own, for
+Identity (--surface identity) or Boo · Admin (--surface boo-admin).
 
 Example:
   export YOTTABOT_TOKEN="$(yottactl org token)"
@@ -234,6 +238,27 @@ Example:
 			if err != nil {
 				return err
 			}
+			// A service account's token is for one surface (plan 334 step 6).
+			machine, err := activeMachine(cfg)
+			if err != nil {
+				return err
+			}
+			if machine != nil {
+				path := "/v1/directory"
+				switch surface {
+				case "identity":
+				case "boo-admin":
+					path = booAdminPrefix
+				default:
+					return &ExitError{Code: 2, Msg: "--surface is identity or boo-admin"}
+				}
+				t, err := machine.token(machine.audienceFor(path))
+				if err != nil {
+					return err
+				}
+				fmt.Fprintln(cmd.OutOrStdout(), t)
+				return nil
+			}
 			s := cfg.Login
 			if s == nil || s.Token == "" || !s.ExpiresAt.After(loginNow()) {
 				return &ExitError{Code: 2, Msg: errLoginEnded.Error()}
@@ -242,4 +267,6 @@ Example:
 			return nil
 		},
 	}
+	cmd.Flags().StringVar(&surface, "surface", "identity", "for a service account: the token's surface, identity or boo-admin (a person's token is for both)")
+	return cmd
 }
